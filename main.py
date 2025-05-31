@@ -25,6 +25,7 @@ def get_config():
         outputs[name]['grid'] = map(int, values.get('Grid', '10x10').split('x'))
         size = values.get('OutputSize', None)
         outputs[name]['size'] = map(int, size.split('x')) if size else None
+        outputs[name]['quality'] = int(values.get('Quality', 60))
         outputs[name]['path'] = values.get('SavePath', 'collage.jpg')
 
 
@@ -137,4 +138,4 @@ for _, output in config['outputs'].items():
             config['api_key'],
             grid=tuple(output['grid']),
             output_size=tuple(output['size'])
-            ).save(output['path'], optimize=True, quality=60)
+            ).save(output['path'], optimize=True, quality=output['quality'])
