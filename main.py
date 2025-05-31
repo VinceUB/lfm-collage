@@ -13,10 +13,22 @@ def get_config():
     config = configparser.ConfigParser()
     config.read('lfm.ini')
 
-    username = config['Options'].get('Username', None)
-    api_key = config['Options'].get('ApiKey', None)
+    username = config['Options']['Username']
+    api_key = config['Options']['ApiKey']
+    
+    outputs = {}
+    for section, values in config.items():
+        if not section.startswith('Output'):
+            continue
+        name = section.split('-', 1)[-1]
+        outputs[name] = {}
+        outputs[name]['grid'] = map(int, values.get('Grid', '10x10').split('x'))
+        size = values.get('OutputSize', None)
+        outputs[name]['size'] = map(int, size.split('x')) if size else None
+        outputs[name]['path'] = values.get('SavePath', 'collage.jpg')
 
-    return {'username': username, 'api_key': api_key}
+
+    return {'username': username, 'api_key': api_key, 'outputs': outputs}
 
 
 def get_albums(username, api_key, limit=16*9, period='12month'):
@@ -104,9 +116,8 @@ def make_collage(images, grid=(16, 9), cell=(300, 300)):
             i+=1
     return collage
 
-def collage_pipeline(grid=(32,18), output_size=None, image_dims=(300,300)) -> Image:
-    config = get_config()
-    albums = get_albums(config['username'], config['api_key'],
+def collage_pipeline(username, api_key, grid=(32,18), output_size=None, image_dims=(300,300)) -> Image:
+    albums = get_albums(username, api_key,
                         limit=int(grid[0]*grid[1]*1.2))
     albums = remove_lfm_dups(albums)
     images = [fetch_image(a) for a in albums]
@@ -118,7 +129,12 @@ def collage_pipeline(grid=(32,18), output_size=None, image_dims=(300,300)) -> Im
 four_k = (3820,2160)
 teneightyp = (1920,1080)
 teneightyp_mob = (1080,1920)
-collage_pipeline(
-        grid=(9,16),
-        output_size=teneightyp_mob
-        ).save(f'collage.jpg', optimize=True, quality=60)
+
+config = get_config()
+for _, output in config['outputs'].items():
+    collage_pipeline(
+            config['username'],
+            config['api_key'],
+            grid=tuple(output['grid']),
+            output_size=tuple(output['size'])
+            ).save(output['path'], optimize=True, quality=60)
