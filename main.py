@@ -123,7 +123,7 @@ def collage_pipeline(username, api_key, grid=(32,18), output_size=None, image_di
     albums = remove_lfm_dups(albums)
     images = [fetch_image(a) for a in albums]
     images = list(filter(None, images))
-    images = shuffle_images(images[:grid[0]*grid[1]+1])
+    images = shuffle_images(images[:grid[0]*grid[1]])
     output_size = output_size or (grid[0]*image_dims[0], grid[1]*image_dims[1])
     return make_collage(images, grid=grid).resize(output_size, Image.LANCZOS)
 
